@@ -152,8 +152,14 @@
     .chat-panel { position: fixed; right: 18px; bottom: 84px; z-index: 30; display: none; flex-direction: column; width: min(calc(100vw - 36px), 340px); height: min(510px, calc(100svh - 110px)); overflow: hidden; border: 1px solid #e2e9f3; border-radius: 18px; background: #fff; box-shadow: 0 20px 55px rgba(20,47,83,.22); color: #243247; text-align: left; }
     .chat-panel.is-open { display: flex; }
     .chat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 16px; color: #fff; background: #1674f8; }
-    .chat-header strong { display: block; font-size: 14px; }
-    .chat-header small { display: block; margin-top: 3px; opacity: .82; font-size: 11px; }
+  .chat-header strong { display: block; font-size: 14px; }
+  .chat-header small { display: block; margin-top: 3px; opacity: .82; font-size: 11px; }
+  .chat-status { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 10px; opacity: .9; }
+  .chat-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #8ee6b0; }
+  .chat-quick-replies { display: flex; flex-wrap: wrap; gap: 6px; padding: 9px 11px 0; background: #f7faff; }
+  .chat-quick-reply { border: 1px solid #dce4ef; border-radius: 999px; padding: 6px 9px; background: #fff; color: #49627f; cursor: pointer; font: inherit; font-size: 11px; }
+  .chat-quick-reply:hover { border-color: #1674f8; color: #1674f8; }
+  .chat-error { margin: 0; padding: 7px 11px; color: #bd3c3c; background: #fff3f3; font-size: 11px; }
     .chat-close { border: 0; background: transparent; color: #fff; cursor: pointer; font-size: 22px; line-height: 1; }
     .chat-messages { display: flex; flex: 1; flex-direction: column; gap: 9px; overflow-y: auto; padding: 15px; background: #f7faff; }
     .chat-empty { margin: auto; color: #7586a2; font-size: 12px; text-align: center; }
@@ -319,8 +325,10 @@
 
   <button class="chat-launcher" id="chat-launcher" type="button" aria-label="Buka percakapan bantuan" aria-expanded="false" hidden>✦</button>
   <section class="chat-panel" id="chat-panel" role="dialog" aria-labelledby="chat-title">
-    <header class="chat-header"><div><strong id="chat-title">Bantuan Live Tracking</strong><small>Balas pesan admin di sini</small></div><button class="chat-close" id="chat-close" type="button" aria-label="Tutup percakapan">×</button></header>
+    <header class="chat-header"><div><strong id="chat-title">Bantuan Live Tracking</strong><small>Tim bantuan siap membantu</small><span class="chat-status">Online</span></div><button class="chat-close" id="chat-close" type="button" aria-label="Tutup percakapan">×</button></header>
+    <div class="chat-quick-replies" aria-label="Pertanyaan cepat"><button class="chat-quick-reply" type="button">Di mana paket saya?</button><button class="chat-quick-reply" type="button">Estimasi tiba?</button></div>
     <div class="chat-messages" id="chat-messages" aria-live="polite"><p class="chat-empty">Tanyakan status pengirimanmu kepada admin.</p></div>
+    <p class="chat-error" id="chat-error" role="alert" hidden></p>
     <form class="chat-composer" id="chat-form"><input class="chat-input" id="chat-input" maxlength="500" placeholder="Tulis pesan..." autocomplete="off" aria-label="Pesan chat" required><button class="chat-send" type="submit" aria-label="Kirim pesan">Kirim</button></form>
   </section>
 
@@ -366,8 +374,21 @@
       const messagesElement = document.getElementById('chat-messages');
       const form = document.getElementById('chat-form');
       const input = document.getElementById('chat-input');
+      const errorElement = document.getElementById('chat-error');
       const referenceInput = document.getElementById('order-reference');
       let reference = '';
+
+      function showError(message) {
+        errorElement.textContent = message;
+        errorElement.hidden = !message;
+      }
+
+      document.querySelectorAll('.chat-quick-reply').forEach(function (button) {
+        button.addEventListener('click', function () {
+          input.value = button.textContent;
+          input.focus();
+        });
+      });
       let pollTimer;
 
       function renderMessages(messages) {
@@ -423,7 +444,7 @@
           input.value = '';
           await loadMessages();
         } catch (error) {
-          alert(error.message || 'Pesan gagal dikirim.');
+          showError(error.message || 'Pesan gagal dikirim.');
         } finally { sendButton.disabled = false; }
       });
 
